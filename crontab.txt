@@ -1,0 +1,2 @@
+@reboot /home/xilinx/sygnallerd/registry_client.py
+*/2 * * * * /home/xilinx/sygnallerd/registry_client.py

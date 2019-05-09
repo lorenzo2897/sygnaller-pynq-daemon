@@ -1,0 +1,31 @@
+SYGNALLER DAEMON
+
+- ping
+
+- upload_files
+{
+  project: string,
+  files: [
+    path: string,
+    contents: base64 string
+  ]
+}
+
+- build_verilog
+
+- run_python
+{
+  project: string,
+  target: string,
+  args: optional string
+}
+
+- python_terminal
+{
+  stdin: string
+}
+
+- stop_python
+{
+}
+

@@ -1,0 +1,15 @@
+Installing
+==========
+
+- Put contents of directory in /home/xilinx/sygnallerd/
+
+- Edit crontab to add contents of crontab.txt
+
+- Register the service by copying sygnallerd.service into /etc/systemd/system/
+
+- Run:
+sudo systemctl daemon-reload
+sudo systemctl enable sygnallerd
+sudo systemctl start sygnallerd
+
+- Check status with systemctl status sygnallerd
