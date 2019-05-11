@@ -31,15 +31,16 @@ def run_build(data):
     project_id = __project_id(project_name)
 
     # collect all source files
-    sources = []
-    hw_dir = os.path.join(base, data['project'], 'hardware')
+    sources = {}
+    proj_dir = os.path.join(base, data['project'])
+    hw_dir = os.path.join(proj_dir, 'hardware')
     for r, d, f in os.walk(hw_dir):
         for file in f:
             if file.lower().endswith('.v'):
                 fname = os.path.join(r, file)
                 try:
                     with open(fname) as fp:
-                        sources.append(fp.read())
+                        sources[os.path.relpath(fname, proj_dir)] = fp.read()
                 except OSError:
                     pass
 
