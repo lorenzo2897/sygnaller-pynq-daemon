@@ -2,12 +2,13 @@ import subprocess
 import os
 import shlex
 from threading import Thread
-from time import sleep
+from time import sleep, time
 from queue import Queue, Empty
 
 base = '/home/xilinx/projects'
 
 # process variables
+start_time = 0
 running_process = None
 stdin_buffer = Queue()
 stdout_buffer = Queue()
@@ -22,7 +23,7 @@ def is_running():
 
 
 def run_python(data):
-    global running_process, handler_thread, stdout_thread, stderr_thread
+    global running_process, handler_thread, stdout_thread, stderr_thread, start_time
 
     if is_running():
         return {'error': 'Process already running'}
@@ -36,6 +37,7 @@ def run_python(data):
 
     # open process
     print("Starting Python process", target_py)
+    start_time = time()
     running_process = subprocess.Popen(cmd,
                                        cwd=os.path.join(base, data['project'], 'data'),
                                        bufsize=0,
@@ -76,6 +78,9 @@ def _handle_subprocess():
             print("Stdin:", val)
             running_process.stdin.write(val)
         sleep(0.1)
+        if time() > start_time + 3600:
+            stop_python()
+
     print("Python process exited")
     stderr_buffer.put("Program terminated.")
     running_process = None
