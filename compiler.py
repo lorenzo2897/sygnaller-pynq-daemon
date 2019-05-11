@@ -40,7 +40,7 @@ def run_build(data):
                 fname = os.path.join(r, file)
                 try:
                     with open(fname) as fp:
-                        sources[os.path.relpath(fname, proj_dir)] = fp.read()
+                        sources[os.path.relpath(fname, hw_dir)] = fp.read()
                 except OSError:
                     pass
 
