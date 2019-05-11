@@ -62,6 +62,19 @@ def run_build(data):
     return json.loads(response)
 
 
+def stop_build(data):
+    project_name = data['project']
+    project_id = __project_id(project_name)
+
+    url = compilation_server + '/cancel_build'
+    data = {"project_id": project_id}
+
+    request = Request(url, json.dumps(data).encode('utf-8'))
+    response = urlopen(request, timeout=8).read().decode()
+
+    return json.loads(response)
+
+
 def get_build_status(data):
     project_name = data['project']
     project_id = __project_id(project_name)

@@ -47,6 +47,9 @@ class DaemonServer(http.server.BaseHTTPRequestHandler):
         elif command == 'start_build':
             return compiler.run_build(data)
 
+        elif command == 'stop_build':
+            return compiler.stop_build(data)
+
         elif command == 'get_build_progress':
             return compiler.get_build_status(data)
 
