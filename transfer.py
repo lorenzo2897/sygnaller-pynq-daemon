@@ -49,6 +49,8 @@ def upload_files(data):
     if category in ['software', 'hardware']:
         for r, d, f in os.walk(os.path.join(project_dir, category)):
             for file in f:
+                if file == 'sygnaller.py':
+                    continue
                 found = os.path.join(r, file)
                 if found not in files_to_keep:
                     try:
