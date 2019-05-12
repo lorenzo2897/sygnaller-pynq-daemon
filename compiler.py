@@ -8,6 +8,8 @@ from urllib.request import Request, urlopen, urlretrieve
 base = '/home/xilinx/projects'
 compilation_server = 'http://sygnaller.silvestri.io:9000'
 
+downloading_files_thread = None
+
 
 def __project_id(project_name):
     return "%012X_%s" % (uuid.getnode(), hashlib.md5(project_name.encode('utf-8')).hexdigest())
@@ -76,6 +78,8 @@ def stop_build(data):
 
 
 def get_build_status(data):
+    global downloading_files_thread
+
     project_name = data['project']
     project_id = __project_id(project_name)
 
@@ -87,10 +91,12 @@ def get_build_status(data):
 
     # update overlay files if there are newer ones on the server
     status = json.loads(response)
-    if status['last_completed'] > local_last_modified_overlay(project_name):
-        print("Downloading bit and tcl files")
+    if status['last_completed'] > local_last_modified_overlay(project_name) and not status['running']:
+        status['running'] = True
         status['downloading'] = True
-        Thread(target=download_overlay_files, args=(project_name,), daemon=True).start()
+        if downloading_files_thread is None:
+            status['logs'] += "Copying bit files back to Pynq board\n"
+            downloading_files_thread = Thread(target=download_overlay_files, args=(project_name,), daemon=True).start()
 
     return status
 
@@ -106,11 +112,16 @@ def local_last_modified_overlay(project_name):
 
 
 def download_overlay_files(project_name):
-    overlay_dir = os.path.join(base, project_name)
+    try:
+        overlay_dir = os.path.join(base, project_name)
 
-    project_id = __project_id(project_name)
-    data = json.dumps({'project_id': project_id}).encode('utf-8')
+        project_id = __project_id(project_name)
+        data = json.dumps({'project_id': project_id}).encode('utf-8')
 
-    urlretrieve(compilation_server + '/download_overlay_bit', os.path.join(overlay_dir, 'overlay.bit'), data=data)
-    urlretrieve(compilation_server + '/download_overlay_tcl', os.path.join(overlay_dir, 'overlay.tcl'), data=data)
+        urlretrieve(compilation_server + '/download_overlay_bit', os.path.join(overlay_dir, 'overlay.bit'), data=data)
+        urlretrieve(compilation_server + '/download_overlay_tcl', os.path.join(overlay_dir, 'overlay.tcl'), data=data)
+    except Exception as e:
+        print("Overlay download failed:", e.__name__)
 
+    global downloading_files_thread
+    downloading_files_thread = None
