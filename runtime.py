@@ -12,6 +12,7 @@ start_time = 0
 running_process = None
 stdin_buffer = Queue()
 stdout_buffer = Queue()
+imgout_buffer = Queue()
 stderr_buffer = Queue()
 handler_thread = None
 stdout_thread = None
@@ -93,7 +94,10 @@ def _handle_stdout():
     while running_process is not None and running_process.poll() is None:  # is still running
         line = running_process.stdout.readline()
         if line != '':
-            stdout_buffer.put(line)  # blocking
+            if line.startswith('~data:image'):
+                imgout_buffer.put(line[1:])
+            else:
+                stdout_buffer.put(line)  # blocking
     stdout_thread = None
 
 
@@ -129,12 +133,15 @@ def terminal(data):
     response = {
         "stdout": [],
         "stderr": [],
+        "images": [],
         "running": running_process is not None
     }
     if 'stdin' in data and data['stdin'] is not None:
         stdin_buffer.put(data['stdin'])
     while not stdout_buffer.empty():
         response["stdout"].append(stdout_buffer.get_nowait())
+    while not imgout_buffer.empty():
+        response["images"].append(imgout_buffer.get_nowait())
     while not stderr_buffer.empty():
         response["stderr"].append(stderr_buffer.get_nowait())
 
