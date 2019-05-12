@@ -3,7 +3,7 @@ import os
 import shlex
 from threading import Thread
 from time import sleep, time
-from queue import Queue, Empty
+from queue import Queue
 
 base = '/home/xilinx/projects'
 
@@ -11,12 +11,16 @@ base = '/home/xilinx/projects'
 start_time = 0
 running_process = None
 stdin_buffer = Queue()
-stdout_buffer = Queue()
-imgout_buffer = Queue()
-stderr_buffer = Queue()
+output_buffer = Queue()
 handler_thread = None
 stdout_thread = None
 stderr_thread = None
+
+
+# output stream descriptors
+fd_stdout = 1
+fd_stderr = 2
+fd_imgout = 3
 
 
 def is_running():
@@ -49,10 +53,8 @@ def run_python(data):
 
     while not stdin_buffer.empty():
         stdin_buffer.get(False)
-    while not stdout_buffer.empty():
-        stdout_buffer.get(False)
-    while not stderr_buffer.empty():
-        stderr_buffer.get(False)
+    while not output_buffer.empty():
+        output_buffer.get(False)
 
     # start handling standard streams
     handler_thread = Thread(target=_handle_subprocess)
@@ -83,7 +85,7 @@ def _handle_subprocess():
             stop_python()
 
     print("Python process exited")
-    stderr_buffer.put("Program terminated.")
+    output_buffer.put((fd_stderr, "Program terminated."))
     running_process = None
     handler_thread = None
 
@@ -95,9 +97,9 @@ def _handle_stdout():
         line = running_process.stdout.readline()
         if line != '':
             if line.startswith('~data:image'):
-                imgout_buffer.put(line[1:])
+                output_buffer.put((fd_imgout, line[1:]))
             else:
-                stdout_buffer.put(line)  # blocking
+                output_buffer.put((fd_stdout, line))  # blocking
     stdout_thread = None
 
 
@@ -107,7 +109,7 @@ def _handle_stderr():
     while running_process is not None and running_process.poll() is None:  # is still running
         line = running_process.stderr.readline()
         if line != '':
-            stderr_buffer.put(line)  # blocking
+            output_buffer.put((fd_stderr, line))  # blocking
     stderr_thread = None
 
 
@@ -131,18 +133,13 @@ def stop_python():
 
 def terminal(data):
     response = {
-        "stdout": [],
-        "stderr": [],
-        "images": [],
+        "output": [],
         "running": running_process is not None
     }
     if 'stdin' in data and data['stdin'] is not None:
         stdin_buffer.put(data['stdin'])
-    while not stdout_buffer.empty():
-        response["stdout"].append(stdout_buffer.get_nowait())
-    while not imgout_buffer.empty():
-        response["images"].append(imgout_buffer.get_nowait())
-    while not stderr_buffer.empty():
-        response["stderr"].append(stderr_buffer.get_nowait())
+    while not output_buffer.empty():
+        fd, data = output_buffer.get_nowait()
+        response["output"].append([fd, data])
 
     return response

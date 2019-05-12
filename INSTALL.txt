@@ -1,6 +1,8 @@
 Installing
 ==========
 
+- Edit /etc/matplotlibrc to change backend from TkAgg to Agg
+
 - Put contents of directory in /home/xilinx/sygnallerd/
 
 - Edit crontab to add contents of crontab.txt
