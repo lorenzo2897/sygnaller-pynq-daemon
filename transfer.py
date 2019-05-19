@@ -62,10 +62,13 @@ def upload_files(data):
 
     # make sure the API files are still there
     if not os.path.exists(os.path.join(api_dir, 'terminal.py')):
-        with open(os.path.join(api_dir, 'terminal.py')) as f:
+        with open(os.path.join(api_dir, 'terminal.py'), 'w') as f:
             f.write("""
 import sys
 import base64
+
+def error(msg):
+    print(msg, file=sys.stderr)
 
 def imageFromDataURI(uri):
     print("~"+uri)
@@ -82,5 +85,8 @@ def showFigure(plt):
     print("~data:image;base64,"+ base64.b64encode(buf.read()).decode('utf-8'))
 
 """)
+    if not os.path.exists(os.path.join(api_dir, '__init__.py')):
+        with open(os.path.join(api_dir, '__init__.py'), 'w') as f:
+            f.write("")
 
     return {}
