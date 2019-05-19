@@ -114,14 +114,14 @@ def local_last_modified_overlay(project_name):
 def download_overlay_files(project_name):
     try:
         overlay_dir = os.path.join(base, project_name)
-        api_dir = os.path.join(base, project_name, 'software')
+        api_dir = os.path.join(base, project_name, 'software/sygnaller')
 
         project_id = __project_id(project_name)
         data = json.dumps({'project_id': project_id}).encode('utf-8')
 
         urlretrieve(compilation_server + '/download_overlay_bit', os.path.join(overlay_dir, 'overlay.bit'), data=data)
         urlretrieve(compilation_server + '/download_overlay_tcl', os.path.join(overlay_dir, 'overlay.tcl'), data=data)
-        urlretrieve(compilation_server + '/download_python_api', os.path.join(api_dir, 'sygnaller.py'), data=data)
+        urlretrieve(compilation_server + '/download_python_api', os.path.join(api_dir, 'hw.py'), data=data)
     except Exception as e:
         print("Overlay download failed:", e.__name__)
 

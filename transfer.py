@@ -18,8 +18,10 @@ def fix_owner_and_permissions(path):
 def upload_files(data):
     project_dir = os.path.join(base, data['project'])
     data_dir = os.path.join(base, data['project'], 'data')
+    api_dir = os.path.join(base, data['project'], 'software', 'sygnaller')
     os.makedirs(project_dir, exist_ok=True)
     os.makedirs(data_dir, exist_ok=True)
+    os.makedirs(api_dir, exist_ok=True)
     fix_owner_and_permissions(project_dir)
     fix_owner_and_permissions(data_dir)
 
@@ -48,14 +50,37 @@ def upload_files(data):
     category = data['directory']
     if category in ['software', 'hardware']:
         for r, d, f in os.walk(os.path.join(project_dir, category)):
+            if r.endswith('sygnaller'):
+                continue
             for file in f:
-                if file == 'sygnaller.py':
-                    continue
                 found = os.path.join(r, file)
                 if found not in files_to_keep:
                     try:
                         os.remove(found)
                     except:
                         pass
+
+    # make sure the API files are still there
+    if not os.path.exists(os.path.join(api_dir, 'terminal.py')):
+        with open(os.path.join(api_dir, 'terminal.py')) as f:
+            f.write("""
+import sys
+import base64
+
+def imageFromDataURI(uri):
+    print("~"+uri)
+    
+def imageFromFile(filename):
+    with open(filename, "rb") as f:
+        print("~data:image;base64,"+ base64.b64encode(f.read()).decode('utf-8'))
+
+def showFigure(plt):
+    import io
+    buf = io.BytesIO()
+    plt.gcf().savefig(buf, format='png')
+    buf.seek(0)
+    print("~data:image;base64,"+ base64.b64encode(buf.read()).decode('utf-8'))
+
+""")
 
     return {}
