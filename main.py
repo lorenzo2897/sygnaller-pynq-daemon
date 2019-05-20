@@ -43,7 +43,7 @@ class DaemonServer(http.server.BaseHTTPRequestHandler):
             return runtime.terminal(data)
 
         elif command == 'python_video_stream':
-            return video.get_last_frame()
+            return video.get_last_frame(data)
 
         elif command == 'clear_build_cache':
             return compiler.clear_cache(data)
