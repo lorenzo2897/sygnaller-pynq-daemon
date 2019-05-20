@@ -1,6 +1,7 @@
 import subprocess
 import os
 import shlex
+import signal
 from threading import Thread
 from time import sleep, time
 from queue import Queue
@@ -9,7 +10,7 @@ base = '/home/xilinx/projects'
 
 # process variables
 start_time = 0
-running_process = None
+running_process: subprocess.Popen = None
 stdin_buffer = Queue()
 output_buffer = Queue()
 handler_thread = None
@@ -119,7 +120,12 @@ def stop_python():
     if running_process is None:
         return {}
 
-    running_process.kill()
+    os.kill(running_process.pid, signal.SIGINT)
+
+    try:
+        running_process.wait(timeout=5000)
+    except:
+        running_process.kill()
 
     if handler_thread is not None:
         handler_thread.join()  # wait for it to close
