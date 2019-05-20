@@ -9,6 +9,7 @@ import traceback
 import transfer
 import runtime
 import compiler
+import video
 
 
 class DaemonServer(http.server.BaseHTTPRequestHandler):
@@ -40,6 +41,9 @@ class DaemonServer(http.server.BaseHTTPRequestHandler):
 
         elif command == 'python_terminal':
             return runtime.terminal(data)
+
+        elif command == 'python_video_stream':
+            return video.get_last_frame()
 
         elif command == 'clear_build_cache':
             return compiler.clear_cache(data)
@@ -106,12 +110,24 @@ class DaemonServer(http.server.BaseHTTPRequestHandler):
             traceback.print_exc()
             resp = self._error('Server error (%s encountered %s)' % (command, type(e).__name__))
 
-        self.send_response(200)
-        self.send_header('Content-Type', 'application/json')
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.end_headers()
-        self.wfile.write(bytes(json.dumps(resp), encoding='utf-8'))
-        self.wfile.write(b'\n')
+        if 'file' in resp:
+            try:
+                with open(resp['file'], 'rb') as f:
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/octet-stream')
+                    self.end_headers()
+                    self.wfile.write(f.read())
+            except IOError:
+                self.send_error(404, 'File Not Found')
+        else:
+            self.send_response(200)
+            if 'video-error' in resp:
+                self.send_header('X-Video-Error', resp['video-error'])
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(bytes(json.dumps(resp), encoding='utf-8'))
+            self.wfile.write(b'\n')
 
 
 def start_server(port=8000):
