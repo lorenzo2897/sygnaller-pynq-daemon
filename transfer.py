@@ -90,3 +90,95 @@ def showFigure(plt):
             f.write("")
 
     return {}
+
+
+# *****************************************
+# Unit tests
+# *****************************************
+
+import unittest
+
+
+class TestTransfer(unittest.TestCase):
+
+    def setUp(self):
+        import shutil
+        shutil.rmtree('/home/xilinx/projects/_test_dummy')
+
+    def test_fix_permissions(self):
+        try:
+            os.remove("/tmp/dummyperms")
+        except:
+            pass
+        with open("/tmp/dummyperms", 'w') as f:
+            f.write("temp")
+        fix_owner_and_permissions("/tmp/dummyperms")
+        self.assertEqual(os.stat("/tmp/dummyperms").st_mode & 0o777, 0o777)
+
+    def test_upload(self):
+        data = {
+            "project": "_test_dummy",
+            "directory": "software",
+            "files": [
+                {
+                    "path": "software/main.py",
+                    "contents": ""
+                }
+            ]
+        }
+        upload_files(data)
+        # check
+        self.assertTrue(os.path.exists('/home/xilinx/projects/_test_dummy/software/main.py'))
+
+    def test_upload_cleanup(self):
+        # request 1
+        data = {
+            "project": "_test_dummy",
+            "directory": "software",
+            "files": [
+                {
+                    "path": "software/main.py",
+                    "contents": ""
+                },
+                {
+                    "path": "software/todelete.py",
+                    "contents": ""
+                }
+            ]
+        }
+        upload_files(data)
+
+        # check
+        self.assertTrue(os.path.exists('/home/xilinx/projects/_test_dummy/software/main.py'))
+        self.assertTrue(os.path.exists('/home/xilinx/projects/_test_dummy/software/todelete.py'))
+
+        # request 2
+        data = {
+            "project": "_test_dummy",
+            "directory": "software",
+            "files": [
+                {
+                    "path": "software/main.py",
+                    "contents": None
+                }
+            ]
+        }
+        upload_files(data)
+
+        # check
+        self.assertTrue(os.path.exists('/home/xilinx/projects/_test_dummy/software/main.py'))
+        self.assertFalse(os.path.exists('/home/xilinx/projects/_test_dummy/software/todelete.py'))
+
+    def test_api(self):
+        data = {
+            "project": "_test_dummy",
+            "directory": "software",
+            "files": []
+        }
+        upload_files(data)
+        # check
+        self.assertTrue(os.path.exists('/home/xilinx/projects/_test_dummy/software/sygnaller/terminal.py'))
+
+
+if __name__ == '__main__':
+    unittest.main()

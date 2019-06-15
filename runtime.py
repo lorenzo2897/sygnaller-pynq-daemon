@@ -149,3 +149,74 @@ def terminal(data):
         response["output"].append([fd, data])
 
     return response
+
+
+# *****************************************
+# Unit tests
+# *****************************************
+
+import unittest
+
+
+class TestRuntime(unittest.TestCase):
+
+    def setUp(self):
+        import shutil
+        shutil.rmtree('/home/xilinx/projects/_test_dummy')
+        os.makedirs("/home/xilinx/projects/_test_dummy/data")
+        with open("/home/xilinx/projects/_test_dummy/main.py", 'w') as f:
+            f.write("""
+from time import sleep
+print('hello')
+sleep(3)
+""")
+
+    def test_no_running(self):
+        self.assertFalse(is_running())
+
+    def test_running(self):
+        # run
+        run_python({
+            "project": "_test_dummy",
+            "target": "main.py"
+        })
+
+        # check
+        self.assertTrue(is_running())
+        sleep(4)
+        self.assertFalse(is_running())
+
+    def test_terminal(self):
+        # run
+        run_python({
+            "project": "_test_dummy",
+            "target": "main.py"
+        })
+
+        # check
+        self.assertEqual(terminal({}), {
+            "output": [
+                [fd_stdout, "hello"]
+            ],
+            "running": True
+        })
+        sleep(5)
+        self.assertEqual(terminal({}), {
+            "output": [
+                [fd_stderr, "Program terminated."]
+            ],
+            "running": False
+        })
+
+    def test_stopping(self):
+        run_python({
+            "project": "_test_dummy",
+            "target": "main.py"
+        })
+        self.assertTrue(is_running())
+        stop_python()
+        self.assertFalse(is_running())
+
+
+if __name__ == '__main__':
+    unittest.main()

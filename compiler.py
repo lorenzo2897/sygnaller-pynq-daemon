@@ -11,13 +11,13 @@ compilation_server = 'http://sygnaller.silvestri.io:9000'
 downloading_files_thread = None
 
 
-def __project_id(project_name):
+def _project_id(project_name):
     return "%012X_%s" % (uuid.getnode(), hashlib.md5(project_name.encode('utf-8')).hexdigest())
 
 
 def clear_cache(data):
     project_name = data['project']
-    project_id = __project_id(project_name)
+    project_id = _project_id(project_name)
 
     url = compilation_server + '/clear_cache'
     data = {'project_id': project_id}
@@ -30,7 +30,7 @@ def clear_cache(data):
 
 def run_build(data):
     project_name = data['project']
-    project_id = __project_id(project_name)
+    project_id = _project_id(project_name)
 
     # collect all source files
     sources = {}
@@ -66,7 +66,7 @@ def run_build(data):
 
 def stop_build(data):
     project_name = data['project']
-    project_id = __project_id(project_name)
+    project_id = _project_id(project_name)
 
     url = compilation_server + '/cancel_build'
     data = {"project_id": project_id}
@@ -81,7 +81,7 @@ def get_build_status(data):
     global downloading_files_thread
 
     project_name = data['project']
-    project_id = __project_id(project_name)
+    project_id = _project_id(project_name)
 
     url = compilation_server + '/build_progress'
     data = {'project_id': project_id}
@@ -116,7 +116,7 @@ def download_overlay_files(project_name):
         overlay_dir = os.path.join(base, project_name)
         api_dir = os.path.join(base, project_name, 'software/sygnaller')
 
-        project_id = __project_id(project_name)
+        project_id = _project_id(project_name)
         data = json.dumps({'project_id': project_id}).encode('utf-8')
 
         urlretrieve(compilation_server + '/download_overlay_bit', os.path.join(overlay_dir, 'overlay.bit'), data=data)
@@ -127,3 +127,29 @@ def download_overlay_files(project_name):
 
     global downloading_files_thread
     downloading_files_thread = None
+
+
+# *****************************************
+# Unit tests
+# *****************************************
+
+import unittest
+
+
+class TestCompiler(unittest.TestCase):
+
+    def test_project_id(self):
+        # make
+        name = "randomProjectName123!#"
+        id = _project_id(name)
+        # test
+        self.assertEqual(len(id), 12+1+32)
+        self.assertRegex(id, "^[0-9A-F]+_[0-9a-f]+$")
+
+    def test_local_last_modified(self):
+        result = local_last_modified_overlay("_non_existent_project_xxxx")
+        self.assertEqual(result, 0)
+
+
+if __name__ == '__main__':
+    unittest.main()
