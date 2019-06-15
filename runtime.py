@@ -162,7 +162,7 @@ class TestRuntime(unittest.TestCase):
 
     def setUp(self):
         import shutil
-        shutil.rmtree('/home/xilinx/projects/_test_dummy')
+        shutil.rmtree('/home/xilinx/projects/_test_dummy', True)
         os.makedirs("/home/xilinx/projects/_test_dummy/data")
         with open("/home/xilinx/projects/_test_dummy/main.py", 'w') as f:
             f.write("""

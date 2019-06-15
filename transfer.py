@@ -103,7 +103,7 @@ class TestTransfer(unittest.TestCase):
 
     def setUp(self):
         import shutil
-        shutil.rmtree('/home/xilinx/projects/_test_dummy')
+        shutil.rmtree('/home/xilinx/projects/_test_dummy', True)
 
     def test_fix_permissions(self):
         try:
